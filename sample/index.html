@@ -81,16 +81,25 @@ var ghostId = [];
 var ghostPos = [];
 
 var createScene = async function () {
-
     var scene = new BABYLON.Scene(engine);
+
+    try {
+        const xrHelper = await WebXRExperienceHelper.CreateAsync(scene);
+        const sessionManager = await xrHelper.enterXRAsync("immersive-vr", "local-floor" /*, optionalRenderTarget */ );
+    } catch (e) {
+        var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
+        camera.setTarget(BABYLON.Vector3.Zero());
+        camera.attachControl(canvas, true);
+        setupCameraForCollisions(camera);
+    }
+
+    
     // https://doc.babylonjs.com/divingDeeper/cameras/camera_collisions
     scene.gravity = new BABYLON.Vector3(0, -0.5, 0);
     scene.collisionsEnabled = true;
 
-    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
-    camera.setTarget(BABYLON.Vector3.Zero());
-    camera.attachControl(canvas, true);
-    setupCameraForCollisions(camera);
+
+
 
     //var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
     //light.intensity = 0.7;
@@ -136,9 +145,6 @@ var createScene = async function () {
     generateMaze();
     drawMaze(scene);
     
-
-    
-
     const featureManager = xr.baseExperience.featuresManager;
     // featureManager.disableFeature(BABYLON.WebXRFeatureName.TELEPORTATION);
 
@@ -150,15 +156,30 @@ var createScene = async function () {
         movementOrientationFollowsViewerPose: true, // default true
     });
 
+    xr.baseExperience.onStateChangedObservable.add((webXRState) => {
+        switch(webXRState) {
+            case BABYLON.WebXRState.ENTERING_XR:
+            case BABYLON.WebXRState.IN_XR:
+                break;
+            default:
+                break;
+        }
+    });
     
     xr.baseExperience.sessionManager.onXRFrameObservable.add(() => {
         if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
+            var camPos =  scene.getCameraByName('webxr').getFrontPosition(1.5); 
+            for (let i = 0; i < ghostId.length; i++){
+                    if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
+                        scene.getMeshByName(ghostId[i]).setEnabled(true);
+                    }
             }
+        }
     });
 
 
     //check for ghosts
-    engine.runRenderLoop(function () {
+    /*engine.runRenderLoop(function () {
             var camPos =  scene.getCameraByName('webxr').getFrontPosition(1.5); 
             for (let i = 0; i < ghostId.length; i++){
                     if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
@@ -167,7 +188,7 @@ var createScene = async function () {
             }
     
         scene.render();
-    })
+    })*/
 
     return scene;
 };
