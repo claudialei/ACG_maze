@@ -1,4 +1,4 @@
 # ACG_maze
 
 
-www.claudialei.github.io/ACG_maze/sample%20(6)
+claudialei.github.io/ACG_maze/sample%20(6)
