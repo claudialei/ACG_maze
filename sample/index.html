@@ -60,7 +60,7 @@
         var engine = null;
         var scene = null;
         var sceneToRender = null;
-        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        ;
         /**
  *to do - start box with instruction
  *object that will end the game
@@ -81,23 +81,16 @@ var ghostId = [];
 var ghostPos = [];
 
 var createScene = async function () {
+
     var scene = new BABYLON.Scene(engine);
-
-    try {
-        const xrHelper = await WebXRExperienceHelper.CreateAsync(scene);
-        const sessionManager = await xrHelper.enterXRAsync("immersive-vr", "local-floor" /*, optionalRenderTarget */ );
-    } catch (e) {
-        var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
-        camera.setTarget(BABYLON.Vector3.Zero());
-        camera.attachControl(canvas, true);
-        setupCameraForCollisions(camera);
-    }
-
-    
     // https://doc.babylonjs.com/divingDeeper/cameras/camera_collisions
     scene.gravity = new BABYLON.Vector3(0, -0.5, 0);
     scene.collisionsEnabled = true;
 
+    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
+    camera.setTarget(BABYLON.Vector3.Zero());
+    camera.attachControl(canvas, true);
+    setupCameraForCollisions(camera);
 
 
 
@@ -112,7 +105,7 @@ var createScene = async function () {
 
     // Fog
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
-    scene.fogColor = new BABYLON.Color3(0.65, 0.65, 0.65);
+    scene.fogColor = new BABYLON.Color3(0.2, 0.2, 0.3);
     scene.fogDensity = 0.25;
 
     // Skybox
@@ -134,6 +127,9 @@ var createScene = async function () {
     ground1.checkCollisions = true;
     ground1.material=greenMaterial;
 
+    //createStartingRoom(scene);
+    generateMaze();
+    drawMaze(scene);
 
     const xr = await scene.createDefaultXRExperienceAsync({
         floorMeshes: [ground1],
@@ -141,45 +137,22 @@ var createScene = async function () {
     });
 
 
-    //createStartingRoom(scene);
-    generateMaze();
-    drawMaze(scene);
-    
-    const featureManager = xr.baseExperience.featuresManager;
-    // featureManager.disableFeature(BABYLON.WebXRFeatureName.TELEPORTATION);
+    // set up movement
+        const featureManager = xr.baseExperience.featuresManager;
+        const movementFeature = featureManager.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
+            xrInput: xr.input,
+            // add options here
+            movementOrientationFollowsViewerPose: true, // default true
+        });
 
-    setupCameraForCollisions(xr.input.xrCamera);
-    
-    const movementFeature = featureManager.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
-        xrInput: xr.input,
-        // add options here
-        movementOrientationFollowsViewerPose: true, // default true
-    });
+        setupCameraForCollisions(xr.input.xrCamera);
 
-    xr.baseExperience.onStateChangedObservable.add((webXRState) => {
-        switch(webXRState) {
-            case BABYLON.WebXRState.ENTERING_XR:
-            case BABYLON.WebXRState.IN_XR:
-                break;
-            default:
-                break;
-        }
-    });
     
-    xr.baseExperience.sessionManager.onXRFrameObservable.add(() => {
-        if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
-            var camPos =  scene.getCameraByName('webxr').getFrontPosition(1.5); 
-            for (let i = 0; i < ghostId.length; i++){
-                    if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
-                        scene.getMeshByName(ghostId[i]).setEnabled(true);
-                    }
-            }
-        }
-    });
+    
 
 
     //check for ghosts
-    /*engine.runRenderLoop(function () {
+    engine.runRenderLoop(function () {
             var camPos =  scene.getCameraByName('webxr').getFrontPosition(1.5); 
             for (let i = 0; i < ghostId.length; i++){
                     if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
@@ -188,12 +161,37 @@ var createScene = async function () {
             }
     
         scene.render();
-    })*/
+    })
 
     return scene;
 };
 
+window.initFunction = async function () {
+        var asyncEngineCreation = async function () {
+            try {
+                return createDefaultEngine();
+            } catch (e) {
+                console.log("the available createEngine function failed. Creating the default engine instead");
+                return createDefaultEngine();
+            }
+        }
 
+        window.engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        startRenderLoop(engine, canvas);
+        window.scene = createScene();
+    };
+    initFunction().then(() => {
+        scene.then(returnedScene => {
+            sceneToRender = returnedScene;
+        });
+
+    });
+
+    // Resize
+    window.addEventListener("resize", function () {
+        engine.resize();
+    });
 
 
 //maze
@@ -344,7 +342,7 @@ function createStartingRoom(scene){
                     
                     var asyncEngineCreation = async function() {
                         try {
-                        return createDefaultEngine();
+                        return createEngine();
                         } catch(e) {
                         console.log("the available createEngine function failed. Creating the default engine instead");
                         return createDefaultEngine();
