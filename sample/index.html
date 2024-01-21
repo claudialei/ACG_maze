@@ -95,8 +95,8 @@ var createScene = async function () {
     scene.gravity = new BABYLON.Vector3(0, -0.5, 0);
     scene.collisionsEnabled = true;
 
-    var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2, 12, BABYLON.Vector3.Zero(), scene);
-    //var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
+    //var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2, 12, BABYLON.Vector3.Zero(), scene);
+    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
     camera.setTarget(BABYLON.Vector3.Zero());
     camera.attachControl(canvas, true);
     setupCameraForCollisions(camera);
@@ -113,9 +113,9 @@ var createScene = async function () {
 
 
     // Fog
-    scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+    /*scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
     scene.fogColor = new BABYLON.Color3(0.2, 0.2, 0.3);
-    scene.fogDensity = 0.25;
+    scene.fogDensity = 0.25;*/
 
     scene.clearColor = new BABYLON.Color3(0.2, 0.2, 0.3);
     scene.ambientColor = new BABYLON.Color3(0.6, 0.6, 0.6);
