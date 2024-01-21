@@ -75,7 +75,15 @@ function setupCameraForCollisions(camera) {
     camera.checkCollisions = true;
     camera.applyGravity = true;
     camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
-}
+} 
+
+var createDefaultEngine = function () {
+        return new BABYLON.Engine(canvas, true, {
+            preserveDrawingBuffer: true,
+            stencil: true,
+            disableWebGL2Support: false
+        });
+    };
 
 var ghostId = [];
 var ghostPos = [];
