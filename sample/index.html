@@ -107,28 +107,33 @@ var createScene = async function () {
     //light.intensity = 0.7;
 
     var light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(-1, 5, 0), scene);
-	light.diffuse = new BABYLON.Color3(0.85, 0.85, 0.53, 0.45);
+	light.diffuse = new BABYLON.Color3(1, 1, 0.88, 0.45);
 
     //var ghostlight; excludedMeshes.push(sphere); --> to make ghosts more shiny and bring more light on them
 
 
     // Fog
-    /*scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+    scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
     scene.fogColor = new BABYLON.Color3(0.2, 0.2, 0.3);
-    scene.fogDensity = 0.25;*/
+    scene.fogDensity = 0.25;
 
     scene.clearColor = new BABYLON.Color3(0.2, 0.2, 0.3);
     scene.ambientColor = new BABYLON.Color3(0.6, 0.6, 0.6);
 
     const greenMaterial = new BABYLON.StandardMaterial('greenMat', scene);
-    greenMaterial.specularColor = BABYLON.Color3.Black();
-    greenMaterial.emissiveColor = BABYLON.Color3.Green();
+    greenMaterial.diffuseColor = new BABYLON.Color3(0.02, 0.18, 0);
 
     const ground1 = new BABYLON.Mesh.CreateGround('ground1', 80, 70, 0, scene);
     ground1.position = new BABYLON.Vector3(20,0,-30) 
     ground1.checkCollisions = true;
     ground1.material=greenMaterial;
 
+
+    //imprort sound
+    const ghostSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/medieval-fanfare-6826.mp3", scene, null, {
+        loop: false,
+        autoplay: false,
+    });
     //createStartingRoom(scene);
     generateMaze();
     drawMaze(scene);
@@ -155,10 +160,11 @@ var createScene = async function () {
 
     //check for ghosts
     engine.runRenderLoop(function () {
-            var camPos =  scene.getCameraByName('webxr').getFrontPosition(1.5); 
+            var camPos =  scene.getCameraByName('webxr').getFrontPosition(0.9); 
             for (let i = 0; i < ghostId.length; i++){
                     if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
                         scene.getMeshByName(ghostId[i]).setEnabled(true);
+                        ghostSound.play();
                     }
             }
     
@@ -210,18 +216,23 @@ function drawMaze(scene){
 
     const stoneTexture = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Rock035_4K-JPG/Rock035_4K-JPG_Color.jpg", scene);
     const mossTexture = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Moss002_4K-JPG/Moss002_4K-JPG_Color.jpg", scene);
-    
+    const stoneBump = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Rock035_4K-JPG/Rock035_4K-JPG_NormalDX.jpg", scene)
+    const mossBump = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Moss002_4K-JPG/Moss002_4K-JPG_NormalDX.jpg", scene)
+
+    const brickTex = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Rocks011_1K-PNG/Rocks011_1K-PNG_Color.png",scene)
+    const brickBump = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Rocks011_1K-PNG/Rocks011_1K-PNG_NormalDX.png",scene)
+
     const borderMat = new BABYLON.StandardMaterial("borderMat", scene);
-    borderMat.diffuseTexture = stoneTexture;
-    borderMat.bumpTexture = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Rock035_4K-JPG/Rock035_4K-JPG_NormalDX.jpg", scene)
+    borderMat.diffuseTexture = brickTex//stoneTexture;
+    borderMat.bumpTexture = brickBump//stoneBump;
     //borderMat.specularPower = 0;
     borderMat.specularColor = new BABYLON.Color3(0, 0, 0);
     borderMat.invertNormalMapX = true;
     borderMat.invertNormalMapY = true;
 
     const mazeMat = new BABYLON.StandardMaterial("mazeMat", scene);
-    mazeMat.diffuseTexture = mossTexture;
-    mazeMat.bumpTexture = new BABYLON.Texture("https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/Moss002_4K-JPG/Moss002_4K-JPG_NormalDX.jpg", scene)
+    mazeMat.diffuseTexture = brickTex//mossTexture;
+    mazeMat.bumpTexture = brickBump//mossBump
     mazeMat.specularColor = new BABYLON.Color3(0, 0, 0);
     //mazeMat.specularPower = 0;
     mazeMat.invertNormalMapX = true;
@@ -275,7 +286,7 @@ function drawMaze(scene){
             var rand = Math.random();
             if (rand < 0.12){
                 ghostId[i] = "ghost" + i.toString();
-                let ghost = BABYLON.MeshBuilder.CreatePlane(ghostId[i], {size: 2})
+                let ghost = BABYLON.MeshBuilder.CreatePlane(ghostId[i], {size: 1.5})
                 ghost.position = new BABYLON.Vector3((r + 1)*size, 2, -(c + 1)*size);
                 ghost.setEnabled(false);;
                 ghost.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
