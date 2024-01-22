@@ -130,10 +130,11 @@ var createScene = async function () {
 
 
     //imprort sound
-    const ghostSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/medieval-fanfare-6826.mp3", scene, null, {
+    /*const ghostSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/medieval-fanfare-6826.mp3", scene, null, {
         loop: false,
         autoplay: false,
-    });
+    });*/
+
     //createStartingRoom(scene);
     generateMaze();
     drawMaze(scene);
@@ -164,7 +165,7 @@ var createScene = async function () {
             for (let i = 0; i < ghostId.length; i++){
                     if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
                         scene.getMeshByName(ghostId[i]).setEnabled(true);
-                        ghostSound.play();
+                        //ghostSound.play();
                     }
             }
     
