@@ -1,1 +1,9 @@
-all assets from: https://ambientcg.com/
+ambient music: https://pixabay.com/de/music/geheimnis-in-the-gorgones-cave-156764/
+
+all Texture: https://ambientcg.com/
+
+ghost sounds:
+https://freesound.org/people/Audeption/sounds/418525/?
+https://freesound.org/people/colorsCrimsonTears/sounds/580310/
+
+step sound: https://freesound.org/people/soaper/sounds/71698/
