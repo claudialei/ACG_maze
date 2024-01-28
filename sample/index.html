@@ -93,6 +93,7 @@ var timeElapsed = 0;
 var genGhostTime = 0;
 var ghostTimes =[];
 var ghostEnabled = [];
+var justTriggered = [];
 var penaltyPoints = 0;
 var played = true;
 
@@ -139,17 +140,18 @@ var createScene = async function () {
 //imprort sound
     const ghostSounds = []
     ghostSounds[0] = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/ghost%20sound/418525__audeption__fasching-fanfare-karnevals-tusch-tataa-short.wav", scene);
-    ghostSounds[1] = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/ghost%20sound/580310__colorscrimsontears__fanfare-2-rpg.wav", scene);
-    const ambientSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/in-the-gorgones-cave-156764.mp3", scene, null, {
+    ghostSounds[1] = new BABYLON.Sound("ghostSound1", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/ghost%20sound/580310__colorscrimsontears__fanfare-2-rpg.wav", scene);
+    const ambientSound = new BABYLON.Sound("ambiente", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/in-the-gorgones-cave-156764.mp3", scene, null, {
         loop: true,
         autoplay: true,
+        volume: 0.5,
     });
     const footSteps = [];
-    footSteps[0] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20center.mp3", scene);
-    footSteps[1] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20left.mp3", scene);
-    footSteps[2] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20light%20left.mp3", scene);
-    footSteps[3] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20light%20right.mp3", scene);
-    footSteps[4] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20right.mp3", scene);
+    footSteps[0] = new BABYLON.Sound("steps1", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20center.mp3", scene);
+    footSteps[1] = new BABYLON.Sound("steps2", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20left.mp3", scene);
+    footSteps[2] = new BABYLON.Sound("steps3", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20light%20left.mp3", scene);
+    footSteps[3] = new BABYLON.Sound("steps4", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20light%20right.mp3", scene);
+    footSteps[4] = new BABYLON.Sound("steps5", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20right.mp3", scene);
 
 
 
@@ -169,6 +171,7 @@ var createScene = async function () {
         const movementFeature = featureManager.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
             xrInput: xr.input,
             // add options here
+            movementSpeed: 0.4,
             movementOrientationFollowsViewerPose: true, // default true
         });
 
@@ -182,7 +185,7 @@ var createScene = async function () {
             
             var camPos =  scene.getCameraByName('webxr').getFrontPosition(0.9); 
             for (let i = 0; i < ghostId.length; i++){
-                    if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled() && (genGhostTime+10<timeElapsed) ){  //
+                    if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled() && (genGhostTime+10<timeElapsed) && !justTriggered[i] ){  //
                         scene.getMeshByName(ghostId[i]).setEnabled(true);
                         ghostEnabled[i] = true;
                         var rand = Math.random();
@@ -194,8 +197,13 @@ var createScene = async function () {
                         genGhostTime = timeElapsed;
                         ghostTimes[i] = genGhostTime;
                         console.log ("ghost time:", genGhostTime )
+                        justTriggered[i] = true;
+                        for (let j = 0; j < ghostId.length; j++){
+                            if (justTriggered[j] && j!=i)
+                                justTriggered = false;
+                        }
                     }
-                   // console.log(!scene.getMeshByName(ghostId[i]).isEnabled())
+                   
                     if (ghostTimes[i]+10 < timeElapsed && ghostEnabled[i]){
                         scene.getMeshByName(ghostId[i]).setEnabled(false);
                         ghostEnabled[i] = false;
@@ -203,26 +211,35 @@ var createScene = async function () {
                     }
             }
             
-            var rand = Math.random();
-            if(!played && timeElapsed%100 == 0 && rand < 0.5){
+            var rand1 = Math.random();
+            if(!played && rand1 < 0.1){
                 console.log("tippy tappy")
+                var rand = Math.random();
                 if (rand < 0.2){
+                    footSteps[0].setVolume(5);
                     footSteps[0].play();
+                    console.log("tippy tappy1")
                 }else if(rand < 0.4){
+                    footSteps[1].setVolume(5);
                     footSteps[1].play();
+                    console.log("tippy tappy2")
                 }else if(rand < 0.6){
+                    footSteps[2].setVolume(5);
+                    console.log("tippy tappy3")
                     footSteps[2].play();
                 }else if(rand < 0.8){
+                    footSteps[3].setVolume(5);
                     footSteps[3].play();
+                    console.log("tippy tappy4")
                 }else{
+                    footSteps[4].setVolume(5);
                     footSteps[4].play();
+                    console.log("tippy tappy5")
                 }
                 played = true;
             }
 
-
-            
-            if (timeElapsed < (endTime-startTime)){             //useless
+            if (timeElapsed < (endTime-startTime)){             //useless - debugginh
                 timeElapsed = endTime-startTime;
                 timeElapsed = parseInt(timeElapsed/1000)
                //console.log(timeElapsed);
@@ -299,7 +316,7 @@ let visited = 0;
 let steps= 1000000;
 let cell =[];
 var notStarted = true;
-var size = 2; //changes the maze scale
+var size = 3; //changes the maze scale
 
 function drawMaze(scene){
 
@@ -338,22 +355,22 @@ function drawMaze(scene){
 
 
         if (i!=maze.length){//leaves exit
-            let box1 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+            let box1 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 4}, scene);
             box1.position = new BABYLON.Vector3(i*size, 1.5, 0);
             box1.material = borderMat;
             box1.checkCollisions = true;
            }       
-        let box2 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+        let box2 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 4}, scene);
         box2.position = new BABYLON.Vector3(0,1.5,(-i-1)*size);
         box2.material = borderMat;
         box2.checkCollisions = true;
         if (i!=1){
-        let box3 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+        let box3 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 4}, scene);
         box3.position = new BABYLON.Vector3((maze.length+1)*size, 1.5, (-i-1)*size);
         box3.material = borderMat;
         box3.checkCollisions = true;
         }
-        let box4 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+        let box4 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 4}, scene);
         box4.position = new BABYLON.Vector3(i*size,1.5,(-maze.length-3)*size);
         box4.material = borderMat;
         box4.checkCollisions = true;
@@ -368,7 +385,7 @@ function drawMaze(scene){
     for (let c = 0; c < maze[0].length; c++) {
       if (maze[r][c]){
         if (!((r == 4 && c == maze.length+1) || (r == maze.length-1 && c == 5))){
-            let box = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+            let box = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 4}, scene);
             box.position = new BABYLON.Vector3((r + 1)*size, 1.5, -(c + 1)*size);
             box.material = mazeMat;
             box.checkCollisions = true;
@@ -385,6 +402,7 @@ function drawMaze(scene){
                 ghostPos[i]= {x: ghost.position.x, x1:ghost.position.x-1, x2:ghost.position.x+1, z:ghost.position.z, z1:ghost.position.z-1, z2:ghost.position.z+1}
                 ghostTimes[i] = 0;
                 ghostEnabled[i] = false;
+                justTriggered[i] = false;
                 i++;
             }
         }
@@ -436,10 +454,7 @@ function setUp(){
   
 }
 
-function createStartingRoom(scene){
 
-    //create starting room with instructions and objective
-}
 
 
 
