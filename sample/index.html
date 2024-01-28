@@ -87,22 +87,29 @@ var createDefaultEngine = function () {
 
 var ghostId = [];
 var ghostPos = [];
+var startTime;
+var endTime;
+var timeElapsed = 0;
+var genGhostTime = 0;
+var ghostTimes =[];
+var ghostEnabled = [];
+var penaltyPoints = 0;
+var played = true;
 
 var createScene = async function () {
-
+    startTime = new Date();
     var scene = new BABYLON.Scene(engine);
     // https://doc.babylonjs.com/divingDeeper/cameras/camera_collisions
     scene.gravity = new BABYLON.Vector3(0, -0.5, 0);
     scene.collisionsEnabled = true;
 
     //var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2, 12, BABYLON.Vector3.Zero(), scene);
-    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(-4, 2.5, -6), scene);
+    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(3, 2.5, -3), scene);
     camera.setTarget(BABYLON.Vector3.Zero());
     camera.attachControl(canvas, true);
     setupCameraForCollisions(camera);
 
-
-
+//Light
     //var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
     //light.intensity = 0.7;
 
@@ -112,7 +119,7 @@ var createScene = async function () {
     //var ghostlight; excludedMeshes.push(sphere); --> to make ghosts more shiny and bring more light on them
 
 
-    // Fog
+// Fog
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
     scene.fogColor = new BABYLON.Color3(0.2, 0.2, 0.3);
     scene.fogDensity = 0.25;
@@ -129,12 +136,23 @@ var createScene = async function () {
     ground1.material=greenMaterial;
 
 
-    //imprort sound
-    const ghostSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/medieval-fanfare-6826.mp3", scene);
-    const ambientSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/tense-horror-background-174809.mp3", scene, null, {
+//imprort sound
+    const ghostSounds = []
+    ghostSounds[0] = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/ghost%20sound/418525__audeption__fasching-fanfare-karnevals-tusch-tataa-short.wav", scene);
+    ghostSounds[1] = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/ghost%20sound/580310__colorscrimsontears__fanfare-2-rpg.wav", scene);
+    const ambientSound = new BABYLON.Sound("ghostSound", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/in-the-gorgones-cave-156764.mp3", scene, null, {
         loop: true,
         autoplay: true,
     });
+    const footSteps = [];
+    footSteps[0] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20center.mp3", scene);
+    footSteps[1] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20left.mp3", scene);
+    footSteps[2] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20light%20left.mp3", scene);
+    footSteps[3] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20light%20right.mp3", scene);
+    footSteps[4] = new BABYLON.Sound("steps", "https://raw.githubusercontent.com/claudialei/ACG_maze/main/Assets/foot%20steps/steps%20right.mp3", scene);
+
+
+
 
     //createStartingRoom(scene);
     generateMaze();
@@ -146,7 +164,7 @@ var createScene = async function () {
     });
 
 
-    // set up movement
+// set up movement
         const featureManager = xr.baseExperience.featuresManager;
         const movementFeature = featureManager.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
             xrInput: xr.input,
@@ -156,20 +174,64 @@ var createScene = async function () {
 
         setupCameraForCollisions(xr.input.xrCamera);
 
-    
-    
 
 
-    //check for ghosts
+//game loop??
     engine.runRenderLoop(function () {
+            endTime = new Date();
+            
             var camPos =  scene.getCameraByName('webxr').getFrontPosition(0.9); 
             for (let i = 0; i < ghostId.length; i++){
-                    if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled()){  //
+                    if (((camPos.x > ghostPos[i].x1 && camPos.x < ghostPos[i].x2 && camPos.z > ghostPos[i].z1 && camPos.z < ghostPos[i].z2)) && !scene.getMeshByName(ghostId[i]).isEnabled() && (genGhostTime+10<timeElapsed) ){  //
                         scene.getMeshByName(ghostId[i]).setEnabled(true);
-                        ghostSound.play();
+                        ghostEnabled[i] = true;
+                        var rand = Math.random();
+                        if (rand < 0.5){
+                            ghostSounds[0].play();
+                        }else{
+                            ghostSounds[1].play();
+                        }
+                        genGhostTime = timeElapsed;
+                        ghostTimes[i] = genGhostTime;
+                        console.log ("ghost time:", genGhostTime )
+                    }
+                   // console.log(!scene.getMeshByName(ghostId[i]).isEnabled())
+                    if (ghostTimes[i]+10 < timeElapsed && ghostEnabled[i]){
+                        scene.getMeshByName(ghostId[i]).setEnabled(false);
+                        ghostEnabled[i] = false;
+                        played = false;
                     }
             }
-    
+            
+            var rand = Math.random();
+            if(!played && timeElapsed%100 == 0 && rand < 0.5){
+                console.log("tippy tappy")
+                if (rand < 0.2){
+                    footSteps[0].play();
+                }else if(rand < 0.4){
+                    footSteps[1].play();
+                }else if(rand < 0.6){
+                    footSteps[2].play();
+                }else if(rand < 0.8){
+                    footSteps[3].play();
+                }else{
+                    footSteps[4].play();
+                }
+                played = true;
+            }
+
+
+            
+            if (timeElapsed < (endTime-startTime)){             //useless
+                timeElapsed = endTime-startTime;
+                timeElapsed = parseInt(timeElapsed/1000)
+               //console.log(timeElapsed);
+            }
+
+            //update text plane
+            //updatePlanePos(camPos.x, camPos.z);
+            
+       
         scene.render();
     })
 
@@ -202,6 +264,31 @@ window.initFunction = async function () {
     window.addEventListener("resize", function () {
         engine.resize();
     });
+
+
+function updatePlanePos(x,z){
+        scene.getMeshById("textPlane").position.x = x;
+        scene.getMeshById("textPlane").position.z = z;
+       
+}
+function createTextPlane(scene){
+        var textPlane = BABYLON.MeshBuilder.CreatePlane("textPlane", {width:3, height:3}, scene)
+        textPlane.rotation.x = BABYLON.Tools.ToRadians(90);
+        textPlane.position = new BABYLON.Vector3(-3,0.01,-2)
+        textPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+
+        var dynTexture = new BABYLON.DynamicTexture("dynText", {width:2, height:2}, scene);
+
+        var materialGround2 = new BABYLON.StandardMaterial("Mat", scene);    				
+	    materialGround2.diffuseTexture = dynTexture;
+        textPlane.material = materialGround2;
+
+        var font = "bold 200px monospace";
+        let text = "t";
+        dynTexture.drawText(text, 75, 135, font, "green", "white", true, true);
+
+        
+    }
 
 
 //maze
@@ -249,21 +336,23 @@ function drawMaze(scene){
     //boders
     for (let i =0; i < maze.length+2; i++){
 
-        let box1 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
-        box1.position = new BABYLON.Vector3(i*size, 1.5, 0);
-        box1.material = borderMat;
-        box1.checkCollisions = true;
-        if(i!==0){      //leaves entrance to maze
-            let box2 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
-            box2.position = new BABYLON.Vector3(0,1.5,(-i-1)*size);
-            box2.material = borderMat;
-            box2.checkCollisions = true;
-            
-        }
+
+        if (i!=maze.length){//leaves exit
+            let box1 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+            box1.position = new BABYLON.Vector3(i*size, 1.5, 0);
+            box1.material = borderMat;
+            box1.checkCollisions = true;
+           }       
+        let box2 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
+        box2.position = new BABYLON.Vector3(0,1.5,(-i-1)*size);
+        box2.material = borderMat;
+        box2.checkCollisions = true;
+        if (i!=1){
         let box3 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
         box3.position = new BABYLON.Vector3((maze.length+1)*size, 1.5, (-i-1)*size);
         box3.material = borderMat;
         box3.checkCollisions = true;
+        }
         let box4 = BABYLON.MeshBuilder.CreateBox("box", {width: size, depth:size, height: 3}, scene);
         box4.position = new BABYLON.Vector3(i*size,1.5,(-maze.length-3)*size);
         box4.material = borderMat;
@@ -290,10 +379,12 @@ function drawMaze(scene){
                 ghostId[i] = "ghost" + i.toString();
                 let ghost = BABYLON.MeshBuilder.CreatePlane(ghostId[i], {size: 1.5})
                 ghost.position = new BABYLON.Vector3((r + 1)*size, 2, -(c + 1)*size);
-                ghost.setEnabled(false);;
+                ghost.setEnabled(false);
                 ghost.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
                 ghost.material = ghostMat;
                 ghostPos[i]= {x: ghost.position.x, x1:ghost.position.x-1, x2:ghost.position.x+1, z:ghost.position.z, z1:ghost.position.z-1, z2:ghost.position.z+1}
+                ghostTimes[i] = 0;
+                ghostEnabled[i] = false;
                 i++;
             }
         }
@@ -304,7 +395,7 @@ function drawMaze(scene){
     if ((visited < mazeX * mazeY) && (--steps > 0)) drawMaze();
     console.log(maze.length);
 
-    
+    //createTextPlane(scene);
 
 }
 
